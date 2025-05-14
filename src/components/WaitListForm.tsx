@@ -10,10 +10,10 @@ export default function WaitlistForm() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
-  const validateEmail = (email: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validateEmail = (value: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!validateEmail(email)) {
@@ -25,14 +25,14 @@ export default function WaitlistForm() {
     setStatus('loading');
     setMessage('');
 
-    try {
-      const formData = new FormData();
-      formData.append('email', email);
+    const formData = new FormData();
+    formData.append('email', email);
 
+    try {
       await fetch(formURL, {
         method: 'POST',
         body: formData,
-        mode: 'no-cors',
+        mode: 'no-cors', // Required for Google Apps Script webhooks
       });
 
       setStatus('success');
