@@ -2,9 +2,6 @@
 
 import { useState } from 'react';
 
-const formURL =
-  'https://script.google.com/macros/s/AKfycbz3x3Ej7ECe1PJWApeDku2cQ1NcRdARAO7q_7pFAUT7NnzCg3hbzsIOuN8snR_Im0Wx/exec';
-
 export default function WaitlistForm() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -25,19 +22,24 @@ export default function WaitlistForm() {
     setStatus('loading');
     setMessage('');
 
-    const params = new URLSearchParams({ email });
-
     try {
-      await fetch(formURL, {
+      const res = await fetch('/api/waitlist', {
         method: 'POST',
-        mode: 'no-cors', // This allows the request without triggering a CORS error
-        body: params,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
       });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.message || 'Unknown error');
+      }
 
       setStatus('success');
       setMessage('You’ve been added to the waitlist!');
       setEmail('');
-    } catch {
+    } catch (err) {
+      console.error('Client error:', err);
       setStatus('error');
       setMessage('Something went wrong. Please try again later.');
     }
