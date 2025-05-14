@@ -10,7 +10,7 @@ export default function WaitlistForm() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
-  const validateEmail = (value: string) =>
+  const validateEmail = (value: string): boolean =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -25,18 +25,17 @@ export default function WaitlistForm() {
     setStatus('loading');
     setMessage('');
 
-    const formData = new FormData();
-    formData.append('email', email);
+    const params = new URLSearchParams({ email });
 
     try {
       await fetch(formURL, {
         method: 'POST',
-        body: formData,
-        mode: 'no-cors', // Required for Google Apps Script webhooks
+        mode: 'no-cors', // This allows the request without triggering a CORS error
+        body: params,
       });
 
       setStatus('success');
-      setMessage('🎉 You’ve been added to the waitlist!');
+      setMessage('You’ve been added to the waitlist!');
       setEmail('');
     } catch {
       setStatus('error');
