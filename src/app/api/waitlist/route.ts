@@ -1,5 +1,3 @@
-// src/app/api/waitlist/route.ts
-
 import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
@@ -7,40 +5,31 @@ export async function POST(req: Request) {
     const { email } = await req.json();
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json({ message: 'Invalid email address.' }, { status: 400 });
+      return NextResponse.json({ message: 'Invalid email' }, { status: 400 });
     }
 
-    const formData = new URLSearchParams({ email });
-
-    // Setup timeout (10 seconds)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1000000); // 10 seconds
-
-    const webhookUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL;
-    if (!webhookUrl) {
-      return NextResponse.json({ message: 'Webhook URL not set' }, { status: 500 });
-    }
-
-    const response = await fetch(webhookUrl, {
+    const res = await fetch(process.env.BASEROW_API_URL!, {
       method: 'POST',
-      body: formData,
-      signal: controller.signal,
+      headers: {
+        Authorization: `Token ${process.env.BASEROW_API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        fields: {
+          Email: email, // Ensure this matches your field name in Baserow
+        },
+      }),
     });
 
-    clearTimeout(timeoutId);
-
-    if (!response.ok && response.status !== 0) {
-      // status 0 is normal for `no-cors` from Google
-      throw new Error('Failed to submit to Google Sheet.');
+    if (!res.ok) {
+      const error = await res.text();
+      console.error('Baserow error:', error);
+      return NextResponse.json({ message: 'Failed to save email' }, { status: 500 });
     }
 
     return NextResponse.json({ message: 'Success' });
-  } catch (err: unknown) {
-    if (err instanceof Error && err.name === 'AbortError') {
-      return NextResponse.json({ message: 'Request timed out' }, { status: 504 });
-    }
-
-    console.error('Error in /api/waitlist:', err);
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }
