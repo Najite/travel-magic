@@ -13,8 +13,6 @@ export async function POST(req: Request) {
     // Payload matches docs: email directly at root, no "fields"
     const payload = { email };
 
-    console.log('📤 Sending to Baserow:', { url, payload });
-
     const res = await fetch(url, {
       method: 'POST',
       headers: {
